@@ -1,0 +1,14 @@
+# 构建产物/开发目录（不入库）
+site/
+data/shots/
+data/*_raw.json
+data/extract_log*.txt
+data/prep_log.txt
+data/figures_log.txt
+data/merge_log.txt
+data/figures_log.txt
+__pycache__/
+*.pyc
+
+# 根目录的原始素材原件（副本已入库 sources/，原件留在磁盘不动）
+/*.pdf

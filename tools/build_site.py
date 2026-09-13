@@ -42,6 +42,37 @@ INLINE_JS = """
   var store={};
   try{store=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){store={};}
   function save(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+  // ---- 目录显示/隐藏 ----
+  var NAVKEY='relax1000.navHidden';
+  var mqMobile=window.matchMedia('(max-width:920px)');
+  var navBtn=document.getElementById('navtoggle-btn');
+  function syncAria(){
+    if(!navBtn)return;
+    var open=mqMobile.matches?document.body.classList.contains('nav-open')
+             :!document.documentElement.classList.contains('nav-hidden');
+    navBtn.setAttribute('aria-expanded',open?'true':'false');
+  }
+  if(navBtn){
+    navBtn.addEventListener('click',function(){
+      if(mqMobile.matches){
+        document.body.classList.toggle('nav-open');
+      }else{
+        var h=document.documentElement.classList.toggle('nav-hidden');
+        try{localStorage.setItem(NAVKEY,h?'1':'0');}catch(e){}
+      }
+      syncAria();
+    });
+  }
+  var backdrop=document.querySelector('.backdrop');
+  if(backdrop){backdrop.addEventListener('click',function(){
+    document.body.classList.remove('nav-open');syncAria();
+  });}
+  document.querySelectorAll('.sidebar a').forEach(function(a){
+    a.addEventListener('click',function(){document.body.classList.remove('nav-open');});
+  });
+  window.addEventListener('resize',syncAria);
+  syncAria();
+  // ---- 已掌握进度 ----
   function chapterDone(ch){
     var pre=ch+':',n=0;
     for(var k in store){if(k.indexOf(pre)===0&&store[k])n++;}
@@ -119,7 +150,9 @@ def sidebar(current_file=None):
 def head(title):
     return (f'<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width, initial-scale=1">'
-            f'<title>{htmlmod.escape(title)}</title><link rel="stylesheet" href="style.css"></head>')
+            f'<title>{htmlmod.escape(title)}</title>'
+            f'<script>try{{if(localStorage.getItem("relax1000.navHidden")==="1")document.documentElement.classList.add("nav-hidden")}}catch(e){{}}</script>'
+            f'<link rel="stylesheet" href="style.css"></head>')
 
 def fig_src(f):
     return f if f.startswith("assets/") else "assets/" + f
@@ -198,8 +231,8 @@ for idx, p in enumerate(pages):
     title = f'{ch["no"]} {ch["title"]}' + (f'（{p["chunk_idx"]+1}/{p["chunk_total"]}）' if p["chunk_total"] > 1 else '')
     body = [head(title + " - RELAX 1000题")]
     body.append('<body>')
-    body.append('<input type="checkbox" id="navtoggle" class="navtoggle">')
-    body.append('<label for="navtoggle" class="menu-btn" aria-label="打开目录">☰ 目录</label>')
+    body.append('<button class="menu-btn" id="navtoggle-btn" type="button" aria-label="显示/隐藏目录" aria-expanded="true">☰ 目录</button>')
+    body.append('<div class="backdrop" aria-hidden="true"></div>')
     body.append(sidebar(p["file"]))
     body.append('<main class="content">')
     part_meta = parts[str(ch["part"])]
@@ -225,8 +258,8 @@ for idx, p in enumerate(pages):
 # ---------- 首页 ----------
 body = [head("RELAX 1000题 · 408 自学题册")]
 body.append('<body>')
-body.append('<input type="checkbox" id="navtoggle" class="navtoggle">')
-body.append('<label for="navtoggle" class="menu-btn" aria-label="打开目录">☰ 目录</label>')
+body.append('<button class="menu-btn" id="navtoggle-btn" type="button" aria-label="显示/隐藏目录" aria-expanded="true">☰ 目录</button>')
+body.append('<div class="backdrop" aria-hidden="true"></div>')
 body.append(sidebar("index.html"))
 body.append('<main class="content"><header class="ch-head">'
             '<h1>RELAX 1000题 <span class="h-sub">计算机考研 408 · 自学题册</span></h1>'
@@ -262,7 +295,7 @@ CSS = """:root{--ac:#2563eb;--ink:#1f2937;--dim:#6b7280;--line:#e5e7eb;--bg:#fff
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;overflow-wrap:break-word}
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:270px;overflow-y:auto;border-right:1px solid var(--line);padding:20px 14px 30px}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:270px;overflow-y:auto;border-right:1px solid var(--line);padding:64px 14px 30px;transition:transform .25s ease}
 .brand{display:block;margin:2px 6px 16px}
 .brand-t{font-size:19px;font-weight:700;color:var(--ink)}
 .brand-s{display:block;font-size:12px;color:var(--dim)}
@@ -276,7 +309,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 -apple-system
 .ch-done .toc-meta{color:#16a34a}
 .bar{display:block;height:3px;background:var(--line);border-radius:2px;margin-top:5px;overflow:hidden}
 .bar-fill{display:block;height:100%;width:0;background:var(--ac);transition:width .3s}
-.content{max-width:840px;margin:0 auto;padding:34px 26px 60px}
+.content{max-width:840px;margin:0 auto;padding:34px 26px 60px;transition:margin .25s ease}
 .crumb{color:var(--dim);font-size:13px;margin:0}
 h1{font-size:26px;margin:6px 0 4px;font-weight:700}
 .h-sub{font-size:15px;color:var(--dim);font-weight:400;margin-left:8px}
@@ -322,12 +355,18 @@ h2{font-size:19px;margin:34px 0 8px}
 .toc-row .toc-title{max-width:none;font-size:15px}
 .toc-row .toc-meta{float:none;flex:none}
 .toc-row .bar{flex:1;margin:0}
-.navtoggle{display:none}
-.menu-btn{display:none}
+.menu-btn{position:fixed;top:10px;left:10px;z-index:40;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:14px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.menu-btn:hover{border-color:var(--ac);color:var(--ac)}
+.backdrop{display:none}
+@media (min-width:921px){
+  .content{margin:0 30px 0 300px}
+  html.nav-hidden .sidebar{transform:translateX(-105%)}
+  html.nav-hidden .content{margin:0 auto}
+}
 @media (max-width:920px){
-  .sidebar{transform:translateX(-105%);transition:transform .25s ease;z-index:30;background:#fff}
-  .navtoggle:checked ~ .sidebar{transform:none;box-shadow:0 0 40px rgba(0,0,0,.18)}
-  .menu-btn{display:block;position:fixed;top:10px;left:10px;z-index:40;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:14px;cursor:pointer}
+  .sidebar{transform:translateX(-105%);z-index:30;background:#fff}
+  body.nav-open .sidebar{transform:none;box-shadow:0 0 40px rgba(0,0,0,.18)}
+  body.nav-open .backdrop{display:block;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,.35);z-index:25}
   .content{padding:56px 16px 50px}
   .toc-title{max-width:150px}
 }

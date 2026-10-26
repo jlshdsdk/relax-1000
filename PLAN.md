@@ -20,7 +20,8 @@
 - [ ] P2 tools/extract.py：解析三书 → data/*.json + 报告
 - [ ] P3 tools/build_site.py：生成 MPA（每章≤30题一页）
 - [ ] P4 对抗性审查（子代理）：内容抽查/死链/体积/视觉
-- [ ] P5 部署：gh repo create relax-1000 (public) → Pages(main根) → 验收URL
+- [x] P5 部署：gh repo create relax-1000 (public) → Pages(main根) → 验收URL（2026-09-13 完成）
+- [x] P7 2026-10 勘误版升级（27版）：1576题，速对表答案钥校验，4处分歧裁决，PaddleOCR抽验（2026-10-26 完成，详见 PROGRESS.md）
 
 ## 验收清单
 - Pages URL 外网可访问
